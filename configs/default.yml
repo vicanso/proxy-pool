@@ -1,0 +1,11 @@
+# 抓取的代理网站列表
+crawler:
+- xici
+- ip66
+- kuai
+# 按照需要可配置不同的代理网站的抓取频率
+xici:
+  interval: 5m
+# 重新检测的相关配置
+redetect:
+  interval: 10m
