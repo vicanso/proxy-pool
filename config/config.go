@@ -107,3 +107,12 @@ func GetRedetectInterval() time.Duration {
 	}
 	return interval
 }
+
+// GetListenAddr get listen address
+func GetListenAddr() string {
+	addr := viper.GetString("listen")
+	if addr == "" {
+		return ":4000"
+	}
+	return addr
+}

@@ -23,13 +23,13 @@ import (
 type (
 	// Proxy proxy server
 	Proxy struct {
-		DetectedAt int64
-		IP         string
-		Port       string
-		Category   string
-		Anonymous  bool
-		Speed      int32
-		Fails      int32
+		DetectedAt int64  `json:"detectedAt,omitempty"`
+		IP         string `json:"ip,omitempty"`
+		Port       string `json:"port,omitempty"`
+		Category   string `json:"category,omitempty"`
+		Anonymous  bool   `json:"anonymous,omitempty"`
+		Speed      int32  `json:"speed,omitempty"`
+		Fails      int32  `json:"fails,omitempty"`
 	}
 	// ProxyList proxy list
 	ProxyList struct {

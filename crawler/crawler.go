@@ -269,3 +269,13 @@ func (c *Crawler) Start(crawlers ...ProxyCrawler) {
 		c.detectNewProxy()
 	}()
 }
+
+// GetAvailableProxyList get available proxy list
+func (c *Crawler) GetAvailableProxyList() []*Proxy {
+	return c.avaliableProxyList.List()
+}
+
+// GetAvailableProxy get available proxy
+func (c *Crawler) GetAvailableProxy(category string, speed int32) *Proxy {
+	return c.avaliableProxyList.FindOne(category, speed)
+}

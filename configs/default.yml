@@ -1,3 +1,5 @@
+# 监听地址
+listen: :4000
 # 抓取的代理网站列表
 crawler:
 - xici

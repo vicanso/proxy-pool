@@ -1,46 +1,32 @@
 package main
 
 import (
-	"errors"
-	"time"
-
+	"github.com/vicanso/elton"
+	responder "github.com/vicanso/elton-responder"
 	"github.com/vicanso/proxy-pool/config"
-	"github.com/vicanso/proxy-pool/crawler"
+	_ "github.com/vicanso/proxy-pool/controller"
+	"github.com/vicanso/proxy-pool/log"
+	"github.com/vicanso/proxy-pool/router"
+	"go.uber.org/zap"
 )
 
 func main() {
-	crawlerProxyList := make([]crawler.ProxyCrawler, 0)
-	for _, item := range config.GetCrawlers() {
-		interval := item.Interval
-		var c crawler.ProxyCrawler
-		switch item.Name {
-		case crawler.ProxyIP66:
-			c = crawler.NewIP66Proxy(interval)
-		case crawler.ProxyKuai:
-			c = crawler.NewKuaiProxy(interval)
-		default:
-			c = crawler.NewXiciProxy(interval)
-		}
-		crawlerProxyList = append(crawlerProxyList, c)
+	logger := log.Default()
+	e := elton.New()
+
+	e.Use(func(c *elton.Context) error {
+		c.NoCache()
+		return c.Next()
+	})
+	e.Use(responder.NewDefault())
+
+	router.Init(e)
+	addr := config.GetListenAddr()
+	logger.Info("start to linstening...",
+		zap.String("listen", addr),
+	)
+	err := e.ListenAndServe(addr)
+	if err != nil {
+		panic(err)
 	}
-	if len(crawlerProxyList) == 0 {
-		panic(errors.New("no proxy crawler"))
-	}
-	crawler := crawler.Crawler{}
-	crawler.Start(crawlerProxyList...)
-	go func() {
-		for range time.NewTicker(config.GetRedetectInterval()).C {
-			crawler.RedetectAvailableProxy()
-		}
-	}()
-	done := make(chan bool)
-	<-done
-	// crawler := crawler.NewXiciProxy()
-	// crawler.OnFetch(func(data *service.Proxy) {
-	// 	// fmt.Println(data)
-	// })
-	// crawler.Start(10 * time.Minutes)
-	// proxyList, err := xc.Fetch()
-	// fmt.Println(err)
-	// fmt.Println(len(proxyList))
 }
