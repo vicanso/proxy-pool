@@ -1,6 +1,13 @@
+FROM node:12-alpine as webbuilder
+ADD . /proxy-pool
+RUN cd /proxy-pool/web \
+  && yarn \
+  && yarn build \
+  && rm -rf node_module  
+
 FROM golang:1.13-alpine as builder
 
-ADD . /proxy-pool
+COPY --from=webbuilder /proxy-pool /proxy-pool
 
 RUN apk update \
   && apk add git make \

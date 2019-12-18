@@ -1,8 +1,39 @@
 import React from "react";
 import axios from "axios";
-import { Spin, message, Table } from "antd";
+import {
+  Spin,
+  message,
+  Table,
+  Icon,
+  Row,
+  Col,
+  Select,
+  Button,
+  Card
+} from "antd";
 
 import "./App.sass";
+
+const { Option } = Select;
+const oneProxyURL = window.location.origin + "/proxies/one";
+
+// copy 将内容复制至粘贴板
+export function copy(value, parent) {
+  if (!document.execCommand) {
+    return new Error("The browser isn't support copy.");
+  }
+  const input = document.createElement("input");
+  input.value = value;
+  if (parent) {
+    parent.appendChild(input);
+  } else {
+    document.body.appendChild(input);
+  }
+  input.focus();
+  input.select();
+  document.execCommand("Copy", false, null);
+  input.remove();
+}
 
 class App extends React.Component {
   state = {
@@ -10,6 +41,9 @@ class App extends React.Component {
     total: 0,
     loading: true,
     originalProxies: null,
+    oneProxyURL,
+    selectCategory: "",
+    selectSpeed: "",
     proxies: null
   };
   async componentDidMount() {
@@ -35,8 +69,10 @@ class App extends React.Component {
     }
   }
   handleChange(pagination, filters, sorter) {
-    console.dir(pagination);
     const { originalProxies } = this.state;
+    if (!originalProxies) {
+      return;
+    }
     let arr = [];
     const filterKeys = Object.keys(filters);
     originalProxies.forEach(item => {
@@ -70,8 +106,90 @@ class App extends React.Component {
       proxies: arr
     });
   }
-  render() {
+  renderAvailablePorxySelector() {
+    const { loading, oneProxyURL, selectCategory, selectSpeed } = this.state;
+    if (loading) {
+      return;
+    }
+    let requestUrl = oneProxyURL;
+    const arr = [];
+    if (selectCategory) {
+      arr.push(`category=${selectCategory}`);
+    }
+    if (selectSpeed) {
+      arr.push(`spped=${selectSpeed}`);
+    }
+    if (arr.length !== 0) {
+      requestUrl += `?${arr.join("&")}`;
+    }
+    return (
+      <Card className="proxySelector" title="Get available proxy" size="small">
+        <p>Select cateogry and speed to generate the request.</p>
+        <Row gutter={8}>
+          <Col span={16}>
+            <Button
+              onClick={e => {
+                try {
+                  copy(requestUrl, e.target);
+                  message.info("The URL was copied successfully.");
+                } catch (err) {
+                  message.error(err.message);
+                }
+              }}
+              type="dashed"
+              style={{
+                width: "100%",
+                textAlign: "left"
+              }}
+            >
+              <Icon type="api" />
+              <span>{requestUrl}</span>
+            </Button>
+          </Col>
+          <Col span={4}>
+            <Select
+              defaultValue=""
+              style={{
+                width: "100%"
+              }}
+              onChange={value => {
+                this.setState({
+                  selectCategory: value
+                });
+              }}
+            >
+              <Option value="http">http</Option>
+              <Option value="https">https</Option>
+              <Option value="">http(s)</Option>
+            </Select>
+          </Col>
+          <Col span={4}>
+            <Select
+              defaultValue=""
+              style={{
+                width: "100%"
+              }}
+              onChange={value => {
+                this.setState({
+                  selectSpeed: value,
+                })
+              }}
+            >
+              <Option value="">all</Option>
+              <Option value="0">{"<750ms"}</Option>
+              <Option value="1">{"<150ms"}</Option>
+              <Option value="2">{">=150ms"}</Option>
+            </Select>
+          </Col>
+        </Row>
+      </Card>
+    );
+  }
+  renderProxyList() {
     const { loading, proxies, pageSize } = this.state;
+    if (loading) {
+      return;
+    }
     const columns = [
       {
         title: "IP",
@@ -120,33 +238,39 @@ class App extends React.Component {
         }
       }
     ];
+    return (
+      <Table
+        tableLayout="fixed"
+        pagination={{
+          total: proxies && proxies.length,
+          pageSize,
+          showSizeChanger: true,
+          onShowSizeChange: (current, size) => {
+            this.setState({
+              pageSize: size
+            });
+          }
+        }}
+        columns={columns}
+        dataSource={proxies}
+        onChange={this.handleChange.bind(this)}
+      />
+    );
+  }
+  render() {
+    const { loading } = this.state;
 
     return (
       <div className="App">
+        <header className="header">
+          <Icon type="api" />
+          Free Proxy
+        </header>
         <Spin spinning={loading} tip="Loading..." />
-        {!loading && (
-          <Table
-            // scroll={{ y: 240 }}
-            pagination={{
-              total: proxies && proxies.length,
-              pageSize,
-              showSizeChanger: true,
-              onShowSizeChange: (current, size) => {
-                this.setState({
-                  pageSize: size
-                });
-              }
-            }}
-            columns={columns}
-            dataSource={proxies}
-            onChange={this.handleChange.bind(this)}
-            style={{
-              margin: "30px",
-              width: "100%",
-              backgroundColor: "#f0f0f0"
-            }}
-          />
-        )}
+        <div className="contentWrapper">
+          {this.renderAvailablePorxySelector()}
+          {this.renderProxyList()}
+        </div>
       </div>
     );
   }
