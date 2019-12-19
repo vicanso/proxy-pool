@@ -36,6 +36,7 @@ func init() {
 
 // list get all available proxy
 func (proxyCtrl) list(c *elton.Context) (err error) {
+	c.CacheMaxAge("1m")
 	// 直接返回所有可用的proxy，暂不考虑分页等处理
 	c.Body = map[string]interface{}{
 		"proxies": service.GetAvailableProxyList(),
