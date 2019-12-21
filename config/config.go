@@ -42,6 +42,13 @@ type (
 		Name     string
 		Interval time.Duration
 	}
+	// Detect detect config
+	Detect struct {
+		URL      string
+		Interval time.Duration
+		Timeout  time.Duration
+		MaxTimes int
+	}
 )
 
 func init() {
@@ -99,13 +106,28 @@ func GetCrawlers() []*Crawler {
 	return crawlers
 }
 
-// GetRedetectInterval get redetect interval
-func GetRedetectInterval() time.Duration {
-	interval := viper.GetDuration("redetect.interval")
-	if interval == 0 {
-		return 30 * time.Minute
+// GetDetect get detect config
+func GetDetect() *Detect {
+	prefix := "detect."
+	conf := &Detect{
+		Timeout:  viper.GetDuration(prefix + "timeout"),
+		URL:      viper.GetString(prefix + "url"),
+		Interval: viper.GetDuration(prefix + "interval"),
+		MaxTimes: viper.GetInt(prefix + "maxTimes"),
 	}
-	return interval
+	if conf.Timeout == 0 {
+		conf.Timeout = 3 * time.Second
+	}
+	if conf.Interval == 0 {
+		conf.Interval = 30 * time.Minute
+	}
+	if conf.URL == "" {
+		conf.URL = "https://www.baidu.com"
+	}
+	if conf.MaxTimes <= 0 {
+		conf.MaxTimes = 3
+	}
+	return conf
 }
 
 // GetListenAddr get listen address

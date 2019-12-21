@@ -46,7 +46,8 @@ func init() {
 	}
 	defaultCrawler.Start(crawlerProxyList...)
 	go func() {
-		for range time.NewTicker(config.GetRedetectInterval()).C {
+		detectConfig := config.GetDetect()
+		for range time.NewTicker(detectConfig.Interval).C {
 			defaultCrawler.RedetectAvailableProxy()
 		}
 	}()

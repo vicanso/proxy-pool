@@ -7,7 +7,14 @@ crawler:
 - kuai
 # 按照需要可配置不同的代理网站的抓取频率
 xici:
-  interval: 5m
-# 重新检测的相关配置
-redetect:
   interval: 10m
+# 检测代理是否可用的配置
+detect:
+  # 检测时间（定时对现可用的代理地址重新检测）
+  interval: 30m
+  # 检测地址
+  url: https://www.baidu.com
+  # 检测超时
+  timeout: 3s
+  # 最大次数
+  maxTimes: 3

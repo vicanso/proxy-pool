@@ -26,6 +26,7 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/vicanso/go-axios"
+	"github.com/vicanso/proxy-pool/config"
 	"github.com/vicanso/proxy-pool/log"
 	"go.uber.org/zap"
 )
@@ -43,14 +44,13 @@ const (
 const (
 	defaultUserAgent     = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36"
 	defaulttProxyTimeout = 10 * time.Second
-	defaultDetectURL     = "https://www.baidu.com"
-	defaultDetectTimeout = 3 * time.Second
 )
 
 var (
 	speedDevides = []time.Duration{750 * time.Millisecond, 1500 * time.Millisecond}
 
-	logger = log.Default()
+	logger       = log.Default()
+	detectConfig = config.GetDetect()
 )
 
 type (
@@ -158,27 +158,32 @@ func (c *Crawler) analyze(p *Proxy) (available bool) {
 	if httpClient == nil {
 		return false
 	}
-	ins := axios.NewInstance(&axios.InstanceConfig{
-		Timeout: defaultDetectTimeout,
-		Client:  httpClient,
-	})
-	startedAt := time.Now()
-	resp, err := ins.Get(defaultDetectURL)
-	if err != nil {
-		return false
-	}
-	if resp.Status >= http.StatusOK && resp.Status < http.StatusBadRequest {
-		d := time.Since(startedAt)
-		atomic.StoreInt32(&p.Speed, int32(len(speedDevides)))
-		// 将当前proxy划分对应的分段
-		for index, item := range speedDevides {
-			if d < item {
-				atomic.StoreInt32(&p.Speed, int32(index))
-				break
+	// 多次检测，只要一次成功则认为成功
+	for i := 0; i < detectConfig.MaxTimes; i++ {
+		ins := axios.NewInstance(&axios.InstanceConfig{
+			Timeout: detectConfig.Timeout,
+			Client:  httpClient,
+		})
+		startedAt := time.Now()
+		resp, err := ins.Get(detectConfig.URL)
+		if err != nil {
+			continue
+		}
+		if resp.Status >= http.StatusOK && resp.Status < http.StatusBadRequest {
+			d := time.Since(startedAt)
+			atomic.StoreInt32(&p.Speed, int32(len(speedDevides)))
+			// 将当前proxy划分对应的分段
+			for index, item := range speedDevides {
+				if d < item {
+					atomic.StoreInt32(&p.Speed, int32(index))
+					break
+				}
 			}
+			available = true
+			break
 		}
 	}
-	return true
+	return
 }
 
 // addNewProxy add proxy to new proxy list
