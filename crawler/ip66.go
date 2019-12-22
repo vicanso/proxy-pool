@@ -62,7 +62,7 @@ func (ip66 *ip66Proxy) Start() {
 }
 
 func (ip66 *ip66Proxy) fetch() (err error) {
-	doc, err := ip66.fetchPage("xici", "/%d")
+	doc, err := ip66.fetchPage("ip66", "/%d")
 	if err != nil || doc == nil {
 		return
 	}
