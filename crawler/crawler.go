@@ -117,13 +117,17 @@ func (bp *baseProxyCrawler) fetchPage(name, urlTemplate string) (doc *goquery.Do
 	if err != nil ||
 		resp.Status != http.StatusOK ||
 		len(resp.Data) == 0 {
-		logger.Error(
-			name+" get proxy list fail",
+		logger.Error("get proxy list fail",
+			zap.String("name", name),
 			zap.Int("page", bp.currentPage),
 			zap.Error(err),
 		)
 		return
 	}
+	logger.Info("get proxy list success",
+		zap.String("name", name),
+		zap.Int("page", bp.currentPage),
+	)
 	return goquery.NewDocumentFromReader(bytes.NewReader(resp.Data))
 }
 
