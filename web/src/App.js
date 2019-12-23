@@ -56,6 +56,9 @@ class App extends React.Component {
       proxies.forEach(item => {
         item.speed = item.speed || 0;
       });
+      proxies.sort((a, b) => {
+        return b.detectedAt - a.detectedAt;
+      });
       this.setState({
         proxies,
         originalProxies: proxies
