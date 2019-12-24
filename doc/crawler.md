@@ -7,14 +7,15 @@
 
 ```go
 type (
-	// Proxy proxy server
-	Proxy struct {
-		DetectedAt time.Time
-		IP         string
-		Port       string
-		Category   string
-		Anonymous  bool
-		Speed      int
+	// Crawler crawler
+	Crawler struct {
+		sync.Mutex
+		HTTPDetectURL              string
+		HTTPSDetectURL             string
+		newProxyList               ProxyList
+		avaliableProxyList         ProxyList
+		newProxyDetectStatus       int32
+		availableProxyDetectStatus int32
 	}
 	// FetchListener fetch listener
 	FetchListener func(*Proxy)
@@ -76,24 +77,21 @@ func (bp *baseProxyCrawler) fetchPage(name, urlTemplate string) (doc *goquery.Do
 	bp.currentPage++
 	resp, err := ins.Get(fmt.Sprintf(urlTemplate, bp.currentPage))
 	// 对于抓取失败，则直接退出
-	if err != nil || len(resp.Data) == 0 {
-		logger.Error(
-			name+" get proxy list fail",
+	if err != nil ||
+		resp.Status != http.StatusOK ||
+		len(resp.Data) == 0 {
+		logger.Error("get proxy list fail",
+			zap.String("name", name),
 			zap.Int("page", bp.currentPage),
 			zap.Error(err),
 		)
 		return
 	}
-	doc, err = goquery.NewDocumentFromReader(bytes.NewReader(resp.Data))
-	if err != nil {
-		logger.Error(
-			name+" parse proxy list fail",
-			zap.Int("page", bp.currentPage),
-			zap.Error(err),
-		)
-		return
-	}
-	return
+	logger.Info("get proxy list success",
+		zap.String("name", name),
+		zap.Int("page", bp.currentPage),
+	)
+	return goquery.NewDocumentFromReader(bytes.NewReader(resp.Data))
 }
 ```
 
@@ -253,7 +251,7 @@ func NewProxyClient(p *Proxy) *http.Client {
 			}).DialContext,
 			ForceAttemptHTTP2:     true,
 			MaxIdleConns:          100,
-			IdleConnTimeout:       90 * time.Second,
+			IdleConnTimeout:       10 * time.Second,
 			TLSHandshakeTimeout:   10 * time.Second,
 			ExpectContinueTimeout: 1 * time.Second,
 		},
@@ -266,27 +264,32 @@ func (c *Crawler) analyze(p *Proxy) (available bool) {
 	if httpClient == nil {
 		return false
 	}
-	ins := axios.NewInstance(&axios.InstanceConfig{
-		Timeout: defaultDetectTimeout,
-		Client:  httpClient,
-	})
-	startedAt := time.Now()
-	resp, err := ins.Get(defaultDetectURL)
-	if err != nil {
-		return false
-	}
-	if resp.Status >= http.StatusOK && resp.Status < http.StatusBadRequest {
-		d := time.Since(startedAt)
-		p.Speed = len(speedDevides)
-		// 将当前proxy划分对应的分段
-		for index, item := range speedDevides {
-			if d < item {
-				p.Speed = index
-				break
+	// 多次检测，只要一次成功则认为成功
+	for i := 0; i < detectConfig.MaxTimes; i++ {
+		ins := axios.NewInstance(&axios.InstanceConfig{
+			Timeout: detectConfig.Timeout,
+			Client:  httpClient,
+		})
+		startedAt := time.Now()
+		resp, err := ins.Get(detectConfig.URL)
+		if err != nil {
+			continue
+		}
+		if resp.Status >= http.StatusOK && resp.Status < http.StatusBadRequest {
+			d := time.Since(startedAt)
+			atomic.StoreInt32(&p.Speed, int32(len(speedDevides)))
+			// 将当前proxy划分对应的分段
+			for index, item := range speedDevides {
+				if d < item {
+					atomic.StoreInt32(&p.Speed, int32(index))
+					break
+				}
 			}
+			available = true
+			break
 		}
 	}
-	return true
+	return
 }
 ```
 
@@ -294,22 +297,26 @@ func (c *Crawler) analyze(p *Proxy) (available bool) {
 
 ```go
 // detectProxyList detect proxy list
-func (c *Crawler) detectProxyList(list []*Proxy) (availableList []*Proxy) {
+func (c *Crawler) detectProxyList(list []*Proxy) (availableList []*Proxy, unavailableList []*Proxy) {
 	availableList = make([]*Proxy, 0)
+	unavailableList = make([]*Proxy, 0)
 	w := sync.WaitGroup{}
 	// 控制最多检测proxy的数量
 	chans := make(chan bool, 5)
 	for _, item := range list {
 		w.Add(1)
-		go func(p Proxy) {
+		go func(p *Proxy) {
 			chans <- true
-			if c.analyze(&p) {
-				p.DetectedAt = time.Now()
-				availableList = append(availableList, &p)
+			avaliable := c.analyze(p)
+			atomic.StoreInt64(&p.DetectedAt, time.Now().Unix())
+			if avaliable {
+				availableList = append(availableList, p)
+			} else {
+				unavailableList = append(unavailableList, p)
 			}
 			<-chans
 			w.Done()
-		}(*item)
+		}(item)
 	}
 	w.Wait()
 	return
@@ -323,7 +330,7 @@ func (c *Crawler) detectNewProxy() {
 		return
 	}
 	proxyList := c.newProxyList.Reset()
-	availableList := c.detectProxyList(proxyList)
+	availableList, _ := c.detectProxyList(proxyList)
 	c.avaliableProxyList.Add(availableList...)
 
 	atomic.StoreInt32(&c.newProxyDetectStatus, detectStop)
@@ -336,8 +343,8 @@ func (c *Crawler) detectNewProxy() {
 而对于可用代理IP列表，也需要定期去检测是否可还是可用，在多次检测均失败则认为此代理也不可用，从可用代理列表中删除，逻辑如下：
 
 ```go
-// RedetctAvailableProxy redetect available proxy
-func (c *Crawler) RedetctAvailableProxy() {
+// RedetectAvailableProxy redetect available proxy
+func (c *Crawler) RedetectAvailableProxy() {
 	old := atomic.SwapInt32(&c.availableProxyDetectStatus, detectRunning)
 	// 如果已经在运行中，则直接退出
 	if old == detectRunning {

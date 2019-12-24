@@ -13,7 +13,7 @@ detect:
   # 检测时间（定时对现可用的代理地址重新检测）
   interval: 30m
   # 检测地址
-  url: https://www.baidu.com
+  url: https://www.baidu.com/
   # 检测超时
   timeout: 3s
   # 最大次数

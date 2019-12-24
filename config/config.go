@@ -122,7 +122,7 @@ func GetDetect() *Detect {
 		conf.Interval = 30 * time.Minute
 	}
 	if conf.URL == "" {
-		conf.URL = "https://www.baidu.com"
+		conf.URL = "https://www.baidu.com/"
 	}
 	if conf.MaxTimes <= 0 {
 		conf.MaxTimes = 3

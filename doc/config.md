@@ -1,6 +1,6 @@
 # 应用配置
 
-在具体抓取代理时，可根据需求设定相应的抓取列表以及检测延时等，使用[viper](https://github.com/spf13/viper)，可以方便的通过`yaml`来定义应用配置。在生成go程序，我习惯性采用单一可执行文件，将配置打包至应用程序，对于自动构建发布的流程比较适合。对于是否打包至执行文件，在不同的应用场景可按需考虑，不需要打包的只是在构建时不执行打包则可。
+在具体抓取代理时，可根据需求设定相应的抓取列表以及检测延时等，使用[viper](https://github.com/spf13/viper)，可以方便的通过`yaml`来定义应用配置。在生成go程序，我习惯性采用单一可执行文件，将配置打包至应用程序，对于自动构建发布的流程比较适合。对于是否打包至执行文件，在不同的应用场景可按需考虑，不需要打包的在构建时不执行打包则可。
 
 ## 初始化配置
 
@@ -71,5 +71,42 @@ func GetCrawlers() []*Crawler {
 		})
 	}
 	return crawlers
+}
+```
+
+## 获取检测配置
+
+```go
+type (
+	// Detect detect config
+	Detect struct {
+		URL      string
+		Interval time.Duration
+		Timeout  time.Duration
+		MaxTimes int
+	}
+)
+// GetDetect get detect config
+func GetDetect() *Detect {
+	prefix := "detect."
+	conf := &Detect{
+		Timeout:  viper.GetDuration(prefix + "timeout"),
+		URL:      viper.GetString(prefix + "url"),
+		Interval: viper.GetDuration(prefix + "interval"),
+		MaxTimes: viper.GetInt(prefix + "maxTimes"),
+	}
+	if conf.Timeout == 0 {
+		conf.Timeout = 3 * time.Second
+	}
+	if conf.Interval == 0 {
+		conf.Interval = 30 * time.Minute
+	}
+	if conf.URL == "" {
+		conf.URL = "https://www.baidu.com/"
+	}
+	if conf.MaxTimes <= 0 {
+		conf.MaxTimes = 3
+	}
+	return conf
 }
 ```

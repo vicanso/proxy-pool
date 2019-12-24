@@ -208,12 +208,14 @@ class App extends React.Component {
         title: "Speed",
         dataIndex: "speed",
         key: "speed",
+        width: 120,
         sorter: true
       },
       {
         title: "Type",
         dataIndex: "category",
         key: "category",
+        width: 100,
         filters: [
           { text: "http", value: "http" },
           { text: "https", value: "https" }
@@ -223,6 +225,7 @@ class App extends React.Component {
         title: "Anonymous",
         dataIndex: "anonymous",
         key: "anonymous",
+        width: 130,
         render: v => {
           if (v) {
             return "YES";
