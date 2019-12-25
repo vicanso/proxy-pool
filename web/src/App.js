@@ -265,14 +265,19 @@ class App extends React.Component {
   }
   render() {
     const { loading } = this.state;
-
     return (
       <div className="App">
         <header className="header">
           <Icon type="api" />
           Free Proxy
         </header>
-        <Spin spinning={loading} tip="Loading..." />
+        {loading && <div style={{
+          height: 300,
+          marginTop: "30px",
+          textAlign: "center",
+        }}>
+          <Spin tip="Loading..." />
+        </div>}
         <div className="contentWrapper">
           {this.renderAvailablePorxySelector()}
           {this.renderProxyList()}
