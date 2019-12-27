@@ -4,6 +4,10 @@
 
 注意：网页部分有增加百度统计，部署时可先删除。
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/vicanso/proxy-pool/master/assets/proxy-pool.jpg">
+</p>
+
 ## 常用配置
 
 对于有特别需求，可以调整默认的配置，主要的配置如下：
@@ -38,7 +42,7 @@ detect:
   maxTimes: 3
 ```
 
-## 程序设置
+## 程序设计
 
 - [config](./doc/config.md)
 - [crawler](./doc/crawler.md)

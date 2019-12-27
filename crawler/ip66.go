@@ -74,6 +74,9 @@ func (ip66 *ip66Proxy) fetch() (err error) {
 		if max == 0 {
 			max = 1
 		}
+		if ip66.limitMaxPage != 0 && max > ip66.limitMaxPage {
+			max = ip66.limitMaxPage
+		}
 		ip66.maxPage = max
 	}
 	doc.Find("#main table tr").Each(func(i int, s *goquery.Selection) {

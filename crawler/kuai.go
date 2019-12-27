@@ -77,6 +77,9 @@ func (kuai *kuaiProxy) fetch() (err error) {
 		if max == 0 {
 			max = 1
 		}
+		if kuai.limitMaxPage != 0 && max > kuai.limitMaxPage {
+			max = kuai.limitMaxPage
+		}
 		kuai.maxPage = max
 	}
 	doc.Find("#list tbody tr").Each(func(i int, s *goquery.Selection) {

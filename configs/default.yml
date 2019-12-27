@@ -8,6 +8,11 @@ crawler:
 # 按照需要可配置不同的代理网站的抓取频率
 xici:
   interval: 10m
+  maxPage: 100
+ip66:
+  maxPage: 200
+kuai:
+  maxPage: 200
 # 检测代理是否可用的配置
 detect:
   # 检测时间（定时对现可用的代理地址重新检测）

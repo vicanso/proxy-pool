@@ -79,6 +79,8 @@ type (
 		maxPage int
 		// 状态，运行中或停止
 		status int32
+		// 限制的最大页数
+		limitMaxPage int
 	}
 	// FetchListener fetch listener
 	FetchListener func(*Proxy)
@@ -129,6 +131,11 @@ func (bp *baseProxyCrawler) fetchPage(name, urlTemplate string) (doc *goquery.Do
 		zap.Int("page", bp.currentPage),
 	)
 	return goquery.NewDocumentFromReader(bytes.NewReader(resp.Data))
+}
+
+// LimitMaxPage set limit max page
+func (bp *baseProxyCrawler) LimitMaxPage(value int) {
+	bp.limitMaxPage = value
 }
 
 // NewProxyClient create a new http client with proxy

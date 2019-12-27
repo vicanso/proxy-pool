@@ -41,6 +41,7 @@ type (
 	Crawler struct {
 		Name     string
 		Interval time.Duration
+		MaxPage  int
 	}
 	// Detect detect config
 	Detect struct {
@@ -94,6 +95,7 @@ func GetCrawlers() []*Crawler {
 	data := viper.GetStringSlice("crawler")
 	for _, name := range data {
 		interval := viper.GetDuration(name + ".interval")
+		maxPage := viper.GetInt(name + ".maxPage")
 		// 如果未配置抓取间隔时间，则设置为2分钟
 		if interval == 0 {
 			interval = 2 * time.Minute
@@ -101,6 +103,7 @@ func GetCrawlers() []*Crawler {
 		crawlers = append(crawlers, &Crawler{
 			Name:     name,
 			Interval: interval,
+			MaxPage:  maxPage,
 		})
 	}
 	return crawlers

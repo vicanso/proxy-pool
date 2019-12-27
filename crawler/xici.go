@@ -77,6 +77,9 @@ func (xc *xiciProxy) fetch() (err error) {
 		if max == 0 {
 			max = 1
 		}
+		if xc.limitMaxPage != 0 && max > xc.limitMaxPage {
+			max = xc.limitMaxPage
+		}
 		xc.maxPage = max
 	}
 	// 解析表格获取代理列表
