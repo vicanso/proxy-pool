@@ -5,7 +5,7 @@
 注意：网页部分有增加百度统计，部署时可先删除。
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/vicanso/proxy-pool/master/assets/proxy-pool.jpg">
+  <img src="https://raw.githubusercontent.com/vicanso/proxy-pool/master/assets/proxy-pool.png">
 </p>
 
 ## 常用配置
