@@ -33,11 +33,17 @@ func init() {
 		var c crawler.ProxyCrawler
 		switch item.Name {
 		case crawler.ProxyIP66:
-			c = crawler.NewIP66Proxy(interval)
+			ip66 := crawler.NewIP66Proxy(interval)
+			ip66.LimitMaxPage(item.MaxPage)
+			c = ip66
 		case crawler.ProxyKuai:
-			c = crawler.NewKuaiProxy(interval)
+			kuai := crawler.NewKuaiProxy(interval)
+			kuai.LimitMaxPage(item.MaxPage)
+			c = kuai
 		default:
-			c = crawler.NewXiciProxy(interval)
+			xici := crawler.NewXiciProxy(interval)
+			xici.LimitMaxPage(item.MaxPage)
+			c = xici
 		}
 		crawlerProxyList = append(crawlerProxyList, c)
 	}
