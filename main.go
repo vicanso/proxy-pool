@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/vicanso/elton"
-	responder "github.com/vicanso/elton-responder"
+	"github.com/vicanso/elton/middleware"
 	"github.com/vicanso/proxy-pool/config"
 	_ "github.com/vicanso/proxy-pool/controller"
 	"github.com/vicanso/proxy-pool/log"
@@ -18,7 +18,7 @@ func main() {
 		c.NoCache()
 		return c.Next()
 	})
-	e.Use(responder.NewDefault())
+	e.Use(middleware.NewDefaultResponder())
 
 	router.Init(e)
 	addr := config.GetListenAddr()

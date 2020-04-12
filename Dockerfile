@@ -5,7 +5,7 @@ RUN cd /proxy-pool/web \
   && yarn build \
   && rm -rf node_module  
 
-FROM golang:1.13-alpine as builder
+FROM golang:1.14-alpine as builder
 
 COPY --from=webbuilder /proxy-pool /proxy-pool
 
